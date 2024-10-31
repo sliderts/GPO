@@ -3,7 +3,6 @@ local character = player.Character or player.CharacterAdded:Wait()
 local noclipEnabled = false
 local flyEnabled = false
 local flySpeed = 50
-local flySpeedIncrement = 5
 
 -- Создание GUI-элементов
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -43,56 +42,33 @@ flyButton.TextWrapped = true
 flyButton.BackgroundTransparency = 0.1
 flyButton.AutoButtonColor = false
 
--- Создание ползунка для скорости полета
-local speedLabel = Instance.new("TextLabel", frame)
-speedLabel.Size = UDim2.new(0, 180, 0, 50)
-speedLabel.Position = UDim2.new(0.5, -90, 0, 60)
-speedLabel.Text = "Fly Speed: " .. flySpeed
-speedLabel.TextColor3 = Color3.new(1, 1, 1)
-speedLabel.BackgroundTransparency = 1
-
-local sliderFrame = Instance.new("Frame", frame)
-sliderFrame.Size = UDim2.new(0, 180, 0, 20)
-sliderFrame.Position = UDim2.new(0.5, -90, 0, 110)
-sliderFrame.BackgroundColor3 = Color3.new(0.6, 0.6, 0.6)
-
-local sliderButton = Instance.new("TextButton", sliderFrame)
-sliderButton.Size = UDim2.new(0, 20, 1, 0)
-sliderButton.Position = UDim2.new((flySpeed / 200) - 0.1, 0, 0, 0) -- Расположение в соответствии со значением
-sliderButton.BackgroundColor3 = Color3.new(1, 1, 1)
-
--- Закругление кнопок
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 25)
-toggleCorner.Parent = toggleButton
-
-local flyCorner = Instance.new("UICorner")
-flyCorner.CornerRadius = UDim.new(0, 25)
-flyCorner.Parent = flyButton
-
 -- Функция включения/выключения Noclip
 local function toggleNoclip()
     noclipEnabled = not noclipEnabled
     if noclipEnabled then
         toggleButton.Text = "Noclip On"
         toggleButton.BackgroundColor3 = Color3.new(0.2, 0.6, 0.2) -- Зеленый цвет для включенного состояния
-        -- Изменение свойств коллизии для всех частей персонажа
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
     else
         toggleButton.Text = "Noclip Off"
         toggleButton.BackgroundColor3 = Color3.new(0.6, 0.2, 0.2) -- Красный цвет для выключенного состояния
-        -- Восстановление коллизии
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
-        end
     end
 end
+
+-- Логика noclip
+game:GetService("RunService").Heartbeat:Connect(function()
+    if noclipEnabled then
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+            -- Перемещение вперед
+            rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.LookVector * 0.5 -- Увеличьте значение для быстрого перемещения
+        end
+    end
+end)
 
 -- Функция включения/выключения Fly
 local function toggleFly()
@@ -100,44 +76,42 @@ local function toggleFly()
     if flyEnabled then
         flyButton.Text = "Fly On"
         flyButton.BackgroundColor3 = Color3.new(0.2, 0.6, 0.2) -- Зеленый цвет для включенного состояния
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.Velocity = Vector3.new(0, flySpeed, 0)
-        bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000) -- Плавное движение
-        bodyVelocity.Parent = character.HumanoidRootPart
-        
-        -- Обновление скорости при изменении ползунка
-        sliderButton.MouseButton1Drag:Connect(function()
-            local newValue = math.clamp(sliderButton.Position.X.Scale * 200, 0, 200) -- Обновление значения
-            flySpeed = newValue
-            speedLabel.Text = "Fly Speed: " .. math.floor(flySpeed)
-            bodyVelocity.Velocity = Vector3.new(0, flySpeed, 0)
-            sliderButton.Position = UDim2.new((flySpeed / 200) - 0.1, 0, 0, 0) -- Обновление положения
-        end)
     else
         flyButton.Text = "Fly Off"
         flyButton.BackgroundColor3 = Color3.new(0.6, 0.2, 0.2) -- Красный цвет для выключенного состояния
-        for _, v in pairs(character:GetChildren()) do
-            if v:IsA("BodyVelocity") then
-                v:Destroy()
-            end
-        end
     end
 end
+
+-- Логика полета
+game:GetService("RunService").Heartbeat:Connect(function()
+    if flyEnabled then
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            local camera = game.Workspace.CurrentCamera
+            local direction = Vector3.new()
+
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
+                direction = direction + camera.CFrame.LookVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
+                direction = direction - camera.CFrame.LookVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
+                direction = direction - camera.CFrame.RightVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
+                direction = direction + camera.CFrame.RightVector
+            end
+
+            direction = direction.Unit * flySpeed -- Устанавливаем скорость полета
+            rootPart.Velocity = Vector3.new(direction.X, rootPart.Velocity.Y, direction.Z) -- Сохраняем вертикальную скорость
+        end
+    end
+end)
 
 -- Подключение функций к кнопкам
 toggleButton.MouseButton1Click:Connect(toggleNoclip)
 flyButton.MouseButton1Click:Connect(toggleFly)
-
--- Логика noclip, чтобы она работала постоянно при включении
-game:GetService("RunService").Stepped:Connect(function()
-    if noclipEnabled then
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-    end
-end)
 
 -- Логика перетаскивания меню
 local dragging
