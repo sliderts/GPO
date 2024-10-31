@@ -76,9 +76,21 @@ local function toggleNoclip()
     if noclipEnabled then
         toggleButton.Text = "Noclip On"
         toggleButton.BackgroundColor3 = Color3.new(0.2, 0.6, 0.2) -- Зеленый цвет для включенного состояния
+        -- Изменение свойств коллизии для всех частей персонажа
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
     else
         toggleButton.Text = "Noclip Off"
         toggleButton.BackgroundColor3 = Color3.new(0.6, 0.2, 0.2) -- Красный цвет для выключенного состояния
+        -- Восстановление коллизии
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
     end
 end
 
