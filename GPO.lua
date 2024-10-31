@@ -149,14 +149,5 @@ end
 
 imgui.DarkTheme()
 
--- Основной цикл отрисовки GUI
-game:GetService("RunService").RenderStepped:Connect(function()
-    imgui.NewFrame()
-    imgui.Begin("Noclip Menu", true)
-    imgui.Text("Noclip Status: " .. (noclipEnabled and "Enabled" or "Disabled"))
-    if imgui.Button(noclipEnabled and "Disable Noclip" or "Enable Noclip") then
-        toggleNoclip()
-    end
-    imgui.End()
-    imgui.Render()
-end)
+-- Отображение GUI
+screenGui.Enabled = true
