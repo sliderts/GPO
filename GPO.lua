@@ -1,23 +1,25 @@
--- Roblox GUI для включения/выключения noclip
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local noclipEnabled = false
+local flyEnabled = false
+local flySpeed = 50
 
 -- Создание GUI-элементов
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 local frame = Instance.new("Frame", screenGui)
 local toggleButton = Instance.new("TextButton", frame)
+local flyButton = Instance.new("TextButton", frame)
 
 -- Настройка меню и кнопки
-frame.Size = UDim2.new(0, 200, 0, 100)
-frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0.5, -100, 0.5, -75)
 frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 frame.BackgroundTransparency = 0.3
 frame.BorderSizePixel = 0
 frame.Active = true -- Чтобы включить перетаскивание
 
 toggleButton.Size = UDim2.new(0, 100, 0, 50)
-toggleButton.Position = UDim2.new(0.5, -50, 0.5, -25)
+toggleButton.Position = UDim2.new(0.5, -105, 0, 0)
 toggleButton.Text = "Noclip Off"
 toggleButton.TextColor3 = Color3.new(1, 1, 1)
 toggleButton.BackgroundColor3 = Color3.new(0.6, 0.2, 0.2) -- Красный цвет для выключенного состояния
@@ -28,10 +30,26 @@ toggleButton.TextWrapped = true
 toggleButton.BackgroundTransparency = 0.1
 toggleButton.AutoButtonColor = false
 
--- Закругление кнопки
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 25)
-corner.Parent = toggleButton
+flyButton.Size = UDim2.new(0, 100, 0, 50)
+flyButton.Position = UDim2.new(0.5, 5, 0, 0)
+flyButton.Text = "Fly Off"
+flyButton.TextColor3 = Color3.new(1, 1, 1)
+flyButton.BackgroundColor3 = Color3.new(0.6, 0.2, 0.2) -- Красный цвет для выключенного состояния
+flyButton.BorderSizePixel = 0
+flyButton.TextScaled = true
+flyButton.Font = Enum.Font.SourceSans
+flyButton.TextWrapped = true
+flyButton.BackgroundTransparency = 0.1
+flyButton.AutoButtonColor = false
+
+-- Закругление кнопок
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 25)
+toggleCorner.Parent = toggleButton
+
+local flyCorner = Instance.new("UICorner")
+flyCorner.CornerRadius = UDim.new(0, 25)
+flyCorner.Parent = flyButton
 
 -- Функция включения/выключения Noclip
 local function toggleNoclip()
@@ -45,8 +63,30 @@ local function toggleNoclip()
     end
 end
 
--- Подключение функции к кнопке
+-- Функция включения/выключения Fly
+local function toggleFly()
+    flyEnabled = not flyEnabled
+    if flyEnabled then
+        flyButton.Text = "Fly On"
+        flyButton.BackgroundColor3 = Color3.new(0.2, 0.6, 0.2) -- Зеленый цвет для включенного состояния
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(0, flySpeed, 0)
+        bodyVelocity.MaxForce = Vector3.new(0, flySpeed, 0)
+        bodyVelocity.Parent = character.HumanoidRootPart
+    else
+        flyButton.Text = "Fly Off"
+        flyButton.BackgroundColor3 = Color3.new(0.6, 0.2, 0.2) -- Красный цвет для выключенного состояния
+        for _, v in pairs(character:GetChildren()) do
+            if v:IsA("BodyVelocity") then
+                v:Destroy()
+            end
+        end
+    end
+end
+
+-- Подключение функций к кнопкам
 toggleButton.MouseButton1Click:Connect(toggleNoclip)
+flyButton.MouseButton1Click:Connect(toggleFly)
 
 -- Логика noclip, чтобы она работала постоянно при включении
 game:GetService("RunService").Stepped:Connect(function()
@@ -96,58 +136,9 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
--- Имплементация темной темы для ImGui
-function imgui.DarkTheme()
-    imgui.SwitchContext()
-    -- ==[ STYLE ]==--
-    imgui.GetStyle().WindowPadding = imgui.ImVec2(5, 5)
-    imgui.GetStyle().FramePadding = imgui.ImVec2(5, 5)
-    imgui.GetStyle().ItemSpacing = imgui.ImVec2(5, 5)
-    imgui.GetStyle().ItemInnerSpacing = imgui.ImVec2(2, 2)
-    imgui.GetStyle().TouchExtraPadding = imgui.ImVec2(0, 0)
-    imgui.GetStyle().IndentSpacing = 0
-    imgui.GetStyle().ScrollbarSize = 10
-    imgui.GetStyle().GrabMinSize = 10
-    -- ==[ BORDER ]==--
-    imgui.GetStyle().WindowBorderSize = 1
-    imgui.GetStyle().ChildBorderSize = 1
-    imgui.GetStyle().PopupBorderSize = 1
-    imgui.GetStyle().FrameBorderSize = 1
-    imgui.GetStyle().TabBorderSize = 1
-    -- ==[ ROUNDING ]==--
-    imgui.GetStyle().WindowRounding = 5
-    imgui.GetStyle().ChildRounding = 5
-    imgui.GetStyle().FrameRounding = 5
-    imgui.GetStyle().PopupRounding = 5
-    imgui.GetStyle().ScrollbarRounding = 5
-    imgui.GetStyle().GrabRounding = 5
-    imgui.GetStyle().TabRounding = 5
-    -- ==[ ALIGN ]==--
-    imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
-    imgui.GetStyle().ButtonTextAlign = imgui.ImVec2(0.5, 0.5)
-    imgui.GetStyle().SelectableTextAlign = imgui.ImVec2(0.5, 0.5)
-    -- ==[ COLORS ]==--
-    imgui.GetStyle().Colors[imgui.Col.Text] = imgui.ImVec4(1.00, 1.00, 1.00, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.TextDisabled] = imgui.ImVec4(0.50, 0.50, 0.50, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.WindowBg] = imgui.ImVec4(0.07, 0.07, 0.07, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.ChildBg] = imgui.ImVec4(0.07, 0.07, 0.07, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.PopupBg] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.Border] = imgui.ImVec4(0.25, 0.25, 0.26, 0.54)
-    imgui.GetStyle().Colors[imgui.Col.BorderShadow] = imgui.ImVec4(0.00, 0.00, 0.00, 0.00)
-    imgui.GetStyle().Colors[imgui.Col.FrameBg] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.FrameBgHovered] = imgui.ImVec4(0.25, 0.25, 0.26, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.FrameBgActive] = imgui.ImVec4(0.25, 0.25, 0.26, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.TitleBg] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.TitleBgActive] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.TitleBgCollapsed] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.MenuBarBg] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.ScrollbarBg] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.ScrollbarGrab] = imgui.ImVec4(0.00, 0.00, 0.00, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.ScrollbarGrabHovered] = imgui.ImVec4(0.41, 0.41, 0.41, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.ScrollbarGrabActive] = imgui.ImVec4(0.51, 0.51, 0.51, 1.00)
-end
-
-imgui.DarkTheme()
-
--- Отображение GUI
-screenGui.Enabled = true
+-- Скрытие/показ меню по нажатию клавиши "M"
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessedEvent)
+    if not gameProcessedEvent and input.KeyCode == Enum.KeyCode.M then
+        frame.Visible = not frame.Visible
+    end
+end)
