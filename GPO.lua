@@ -10,7 +10,6 @@ local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 local frame = Instance.new("Frame", screenGui)
 local toggleButton = Instance.new("TextButton", frame)
 local flyButton = Instance.new("TextButton", frame)
-local speedSlider = Instance.new("Slider", frame)
 
 -- Настройка меню и кнопок
 frame.Size = UDim2.new(0, 200, 0, 200)
@@ -52,12 +51,15 @@ speedLabel.Text = "Fly Speed: " .. flySpeed
 speedLabel.TextColor3 = Color3.new(1, 1, 1)
 speedLabel.BackgroundTransparency = 1
 
-local slider = Instance.new("Slider", frame)
-slider.Size = UDim2.new(0, 180, 0, 20)
-slider.Position = UDim2.new(0.5, -90, 0, 110)
-slider.MinValue = 0
-slider.MaxValue = 200
-slider.Value = flySpeed
+local sliderFrame = Instance.new("Frame", frame)
+sliderFrame.Size = UDim2.new(0, 180, 0, 20)
+sliderFrame.Position = UDim2.new(0.5, -90, 0, 110)
+sliderFrame.BackgroundColor3 = Color3.new(0.6, 0.6, 0.6)
+
+local sliderButton = Instance.new("TextButton", sliderFrame)
+sliderButton.Size = UDim2.new(0, 20, 1, 0)
+sliderButton.Position = UDim2.new((flySpeed / 200) - 0.1, 0, 0, 0) -- Расположение в соответствии со значением
+sliderButton.BackgroundColor3 = Color3.new(1, 1, 1)
 
 -- Закругление кнопок
 local toggleCorner = Instance.new("UICorner")
@@ -92,10 +94,12 @@ local function toggleFly()
         bodyVelocity.Parent = character.HumanoidRootPart
         
         -- Обновление скорости при изменении ползунка
-        slider.ValueChanged:Connect(function(value)
-            flySpeed = value
+        sliderButton.MouseButton1Drag:Connect(function()
+            local newValue = math.clamp(sliderButton.Position.X.Scale * 200, 0, 200) -- Обновление значения
+            flySpeed = newValue
             speedLabel.Text = "Fly Speed: " .. math.floor(flySpeed)
             bodyVelocity.Velocity = Vector3.new(0, flySpeed, 0)
+            sliderButton.Position = UDim2.new((flySpeed / 200) - 0.1, 0, 0, 0) -- Обновление положения
         end)
     else
         flyButton.Text = "Fly Off"
