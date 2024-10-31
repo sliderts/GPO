@@ -1,86 +1,49 @@
-local imgui = require 'imgui'
-local vkeys = require 'vkeys'
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local noclipEnabled = false
 
--- Переменные
-local showMenu = imgui.ImBool(false)
-local flyActive = false
-local flyBindKey = vkeys.VK_F -- Клавиша для активации флая, можно изменить
-local menuPosition = imgui.ImVec2(100, 100) -- Начальная позиция меню
-
--- Темная тема
+-- Настройка imgui
 function imgui.DarkTheme()
     imgui.SwitchContext()
-    -- Настройки стиля (как в вашем коде)
-    -- ==[ STYLE ]==--
-    imgui.GetStyle().WindowPadding = imgui.ImVec2(5, 5)
-    imgui.GetStyle().FramePadding = imgui.ImVec2(5, 5)
-    imgui.GetStyle().ItemSpacing = imgui.ImVec2(5, 5)
-    imgui.GetStyle().ItemInnerSpacing = imgui.ImVec2(2, 2)
-    imgui.GetStyle().IndentSpacing = 0
-    imgui.GetStyle().ScrollbarSize = 10
-    imgui.GetStyle().GrabMinSize = 10
-    imgui.GetStyle().WindowBorderSize = 1
-    imgui.GetStyle().WindowRounding = 5
+    imgui.GetStyle().WindowBg = imgui.ImVec4(0.07, 0.07, 0.07, 1.00)
+    imgui.GetStyle().Colors[imgui.Col.Button] = imgui.ImVec4(0.12, 0.12, 0.12, 1.00)
+    imgui.GetStyle().Colors[imgui.Col.ButtonHovered] = imgui.ImVec4(0.21, 0.20, 0.20, 1.00)
+    imgui.GetStyle().Colors[imgui.Col.ButtonActive] = imgui.ImVec4(0.41, 0.41, 0.41, 1.00)
     imgui.GetStyle().FrameRounding = 5
-    imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
-    imgui.GetStyle().Colors[imgui.Col.Text] = imgui.ImVec4(1.00, 1.00, 1.00, 1.00)
-    imgui.GetStyle().Colors[imgui.Col.WindowBg] = imgui.ImVec4(0.07, 0.07, 0.07, 1.00)
-    -- Здесь можно добавить все остальные цвета
+    imgui.GetStyle().WindowRounding = 5
 end
 
--- Главная функция для отображения меню
-function imgui.OnDrawFrame()
-    imgui.DarkTheme() -- Применить темную тему
+imgui.DarkTheme()
 
-    -- Настройки меню с возможностью передвижения
-    imgui.SetNextWindowPos(menuPosition, imgui.Cond.FirstUseEver)
-    imgui.SetNextWindowSize(imgui.ImVec2(250, 150), imgui.Cond.FirstUseEver)
-
-    -- Создание меню
-    imgui.Begin('Меню с флаем', nil, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.MenuBar + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
-    imgui.Text('Нажмите на кнопку для активации флая')
-    
-    -- Кнопка для активации/деактивации флая
-    if imgui.Button(flyActive and 'Выключить флай' or 'Включить флай') then
-        flyActive = not flyActive
+-- Логика интерфейса
+local function renderGUI()
+    imgui.Begin("Noclip Menu", true)
+    if imgui.Button(noclipEnabled and "Noclip On" or "Noclip Off") then
+        toggleNoclip()
     end
-
-    imgui.Text('Текущий бинд: ' .. flyBindKey)
-
-    if imgui.BeginDragDropSource() then
-        local _, pos = imgui.GetMousePos()
-        menuPosition = pos
-        imgui.EndDragDropSource()
-    end
-
     imgui.End()
 end
 
--- Функция для проверки нажатия кнопки флая
-function main()
-    while true do
-        wait(0)
-        -- Проверка нажатия клавиши для активации флая
-        if isKeyDown(flyBindKey) and not imgui.IsAnyItemActive() then
-            flyActive = not flyActive
-        end
-
-        -- Логика флая
-        if flyActive then
-            -- Ваш код для передвижения персонажа
-        end
-
-        -- Отображение меню
-        imgui.Process = showMenu.v
-    end
+-- Функция включения/выключения Noclip
+local function toggleNoclip()
+    noclipEnabled = not noclipEnabled
+    -- Дополнительная логика для изменения цвета кнопки (если необходимо)
 end
 
--- Функция для управления состоянием меню с клавиши
-function onKeyPress(key)
-    if key == vkeys.VK_INSERT then -- Клавиша для открытия меню
-        showMenu.v = not showMenu.v
+-- Логика noclip
+game:GetService("RunService").Stepped:Connect(function()
+    if noclipEnabled then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
     end
-end
+end)
 
--- Регистрация события
-imgui.HookEvents('onKeyPress', onKeyPress)
+-- Основной цикл отрисовки GUI
+game:GetService("RunService").RenderStepped:Connect(function()
+    imgui.NewFrame()
+    renderGUI()
+    imgui.Render()
+end)
