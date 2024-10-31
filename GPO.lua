@@ -3,16 +3,18 @@ local character = player.Character or player.CharacterAdded:Wait()
 local noclipEnabled = false
 local flyEnabled = false
 local flySpeed = 50
+local flySpeedIncrement = 5
 
 -- Создание GUI-элементов
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 local frame = Instance.new("Frame", screenGui)
 local toggleButton = Instance.new("TextButton", frame)
 local flyButton = Instance.new("TextButton", frame)
+local speedSlider = Instance.new("Slider", frame)
 
--- Настройка меню и кнопки
-frame.Size = UDim2.new(0, 200, 0, 150)
-frame.Position = UDim2.new(0.5, -100, 0.5, -75)
+-- Настройка меню и кнопок
+frame.Size = UDim2.new(0, 200, 0, 200)
+frame.Position = UDim2.new(0.5, -100, 0.5, -100)
 frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 frame.BackgroundTransparency = 0.3
 frame.BorderSizePixel = 0
@@ -41,6 +43,21 @@ flyButton.Font = Enum.Font.SourceSans
 flyButton.TextWrapped = true
 flyButton.BackgroundTransparency = 0.1
 flyButton.AutoButtonColor = false
+
+-- Создание ползунка для скорости полета
+local speedLabel = Instance.new("TextLabel", frame)
+speedLabel.Size = UDim2.new(0, 180, 0, 50)
+speedLabel.Position = UDim2.new(0.5, -90, 0, 60)
+speedLabel.Text = "Fly Speed: " .. flySpeed
+speedLabel.TextColor3 = Color3.new(1, 1, 1)
+speedLabel.BackgroundTransparency = 1
+
+local slider = Instance.new("Slider", frame)
+slider.Size = UDim2.new(0, 180, 0, 20)
+slider.Position = UDim2.new(0.5, -90, 0, 110)
+slider.MinValue = 0
+slider.MaxValue = 200
+slider.Value = flySpeed
 
 -- Закругление кнопок
 local toggleCorner = Instance.new("UICorner")
@@ -71,8 +88,15 @@ local function toggleFly()
         flyButton.BackgroundColor3 = Color3.new(0.2, 0.6, 0.2) -- Зеленый цвет для включенного состояния
         local bodyVelocity = Instance.new("BodyVelocity")
         bodyVelocity.Velocity = Vector3.new(0, flySpeed, 0)
-        bodyVelocity.MaxForce = Vector3.new(0, flySpeed, 0)
+        bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000) -- Плавное движение
         bodyVelocity.Parent = character.HumanoidRootPart
+        
+        -- Обновление скорости при изменении ползунка
+        slider.ValueChanged:Connect(function(value)
+            flySpeed = value
+            speedLabel.Text = "Fly Speed: " .. math.floor(flySpeed)
+            bodyVelocity.Velocity = Vector3.new(0, flySpeed, 0)
+        end)
     else
         flyButton.Text = "Fly Off"
         flyButton.BackgroundColor3 = Color3.new(0.6, 0.2, 0.2) -- Красный цвет для выключенного состояния
